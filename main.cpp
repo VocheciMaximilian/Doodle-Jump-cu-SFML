@@ -4,19 +4,19 @@
 using namespace std;
 using namespace sf;
 
-
 class caracter {
 protected:
     Texture texture;
     Sprite sprite;
     Vector2f position;
     Vector2f velocity;
-    float gravity=0.5f;
+    float gravity=10;
+    bool canJump=false;
     bool left=false, right=false;
 public:
     //constructor
     caracter(const string& texture_path, const Vector2f& startPoz)
-        : position(startPoz), velocity(10, 20) {
+        : position(startPoz), velocity(10, 0) {
         if(!texture.loadFromFile(texture_path)) {
             cout<<"Character texture didn't load "<<texture_path<<endl;
         }
@@ -62,6 +62,13 @@ public:
             }
         }
     }
+    void checkCollision(const Sprite& tileSprite) {
+        if(sprite.getGlobalBounds().intersects(tileSprite.getGlobalBounds()) && velocity.x>0) {
+            position.y=tileSprite.getPosition().y-sprite.getGlobalBounds().height;
+            velocity.y=0;
+            canJump=true;
+        }
+    }
     void update() {
         if(left) {
             position.x-=velocity.x;
@@ -74,14 +81,14 @@ public:
         } else if(position.x>640) {
             position.x=0;
         }
-        sprite.setPosition(position);
-    }
-    void checkCollision(const Sprite& tileSprite) {
-        if(sprite.getGlobalBounds().intersects(tileSprite.getGlobalBounds()) && velocity.x>0) {
-            position.y=tileSprite.getPosition().y-sprite.getGlobalBounds().height;
-            velocity.y=-10;
+        if(canJump==true) {
+            velocity.y=10;
+            position.y+=velocity.y;
+            canJump=false;
         }
+        position.y+=gravity;
 
+        sprite.setPosition(position);
     }
 };
 
