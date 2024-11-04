@@ -1,57 +1,190 @@
+#include <SFML/Audio.hpp>
+#include <SFML/Graphics.hpp>
 #include <iostream>
-#include <array>
+using namespace std;
+using namespace sf;
 
-#include <Helper.h>
+
+class caracter {
+protected:
+    Texture texture;
+    Sprite sprite;
+    Vector2f position;
+    Vector2f velocity;
+    float gravity=0.5f;
+    bool left=false, right=false;
+public:
+    //constructor
+    caracter(const string& texture_path, const Vector2f& startPoz)
+        : position(startPoz), velocity(10, 20) {
+        if(!texture.loadFromFile(texture_path)) {
+            cout<<"Character texture didn't load "<<texture_path<<endl;
+        }
+        sprite.setTexture(texture);
+        sprite.setPosition(position);
+    }
+    //cc=
+    caracter(const caracter& other)
+        : texture(other.texture), position(other.position), velocity(other.velocity) {
+        sprite.setTexture(texture);
+        sprite.setPosition(position);
+    }
+    //op=
+    caracter& operator=(const caracter& other) {
+        if(this == &other) return *this;
+        texture = other.texture;
+        position = other.position;
+        velocity = other.velocity;
+        sprite.setTexture(texture);
+        sprite.setPosition(position);
+        return *this;
+    }
+    //destructor
+    virtual ~caracter() {}
+    //afisare
+    void draw(RenderWindow& window){
+        window.draw(sprite);
+    }
+    void processEvents(Keyboard::Key key, bool checkPressed) {
+        if(checkPressed==true) {
+            if(key == Keyboard::A) {
+                left=true;
+            }
+            if(key == Keyboard::D) {
+                right=true;
+            }
+        } else {
+            if(key == Keyboard::A) {
+                left=false;
+            }
+            if(key == Keyboard::D) {
+                right=false;
+            }
+        }
+    }
+    void update() {
+        if(left) {
+            position.x-=velocity.x;
+        }
+        if(right) {
+            position.x+=velocity.x;
+        }
+        if(position.x<0) {
+            position.x=640;
+        } else if(position.x>640) {
+            position.x=0;
+        }
+        sprite.setPosition(position);
+    }
+    void checkCollision(const Sprite& tileSprite) {
+        if(sprite.getGlobalBounds().intersects(tileSprite.getGlobalBounds()) && velocity.x>0) {
+            position.y=tileSprite.getPosition().y-sprite.getGlobalBounds().height;
+            velocity.y=-10;
+        }
+
+    }
+};
+
+class tile {
+    protected:
+       Texture texture;
+       Sprite sprite;
+       Vector2f position;
+    public:
+    //constructor
+    tile(const string& texture_path, const Vector2f& startPoz)
+        : position(startPoz) {
+        if(!texture.loadFromFile(texture_path)) {
+            cout<<"Tile texture didn't load "<<texture_path<<endl;
+        }
+        sprite.setTexture(texture);
+        sprite.setPosition(position);
+    }
+    //cc
+    tile(const tile& other)
+        : texture(other.texture), position(other.position) {
+        sprite.setTexture(texture);
+        sprite.setPosition(position);
+    }
+    //op=
+    tile& operator=(const tile& other) {
+        if(this == &other) return *this;
+        texture = other.texture;
+        position = other.position;
+        sprite.setTexture(texture);
+        sprite.setPosition(position);
+        return *this;
+    }
+    //destructor
+    virtual ~tile() {}
+    //afisare
+    void draw(RenderWindow& window) {
+        window.draw(sprite);
+    }
+    Sprite& getSprite() {
+        return sprite;
+    }
+};
+
+class background {
+    protected:
+       Texture texture;
+       Sprite sprite;
+    public:
+    //constructor
+    background(const string& texture_path) {
+        if(!texture.loadFromFile(texture_path)) {
+            cout<<"Background texture didn't load "<<texture_path<<endl;
+        }
+        sprite.setTexture(texture);
+        sprite.setPosition(0,0);
+    }
+    //cc
+    background(const background& other) {
+        texture = other.texture;
+        sprite.setTexture(texture);
+        sprite.setPosition(0,0);
+    }
+    //op=
+    background& operator=(const background& other) {
+        if(this == &other) return *this;
+        texture = other.texture;
+        sprite.setTexture(texture);
+        sprite.setPosition(0,0);
+        return *this;
+    }
+    //destructor
+    virtual ~background() {}
+    void draw(RenderWindow& window) {
+        window.draw(sprite);
+    }
+};
 
 int main() {
-    std::cout << "Hello, world!\n";
-    std::array<int, 100> v{};
-    int nr;
-    std::cout << "Introduceți nr: ";
-    /////////////////////////////////////////////////////////////////////////
-    /// Observație: dacă aveți nevoie să citiți date de intrare de la tastatură,
-    /// dați exemple de date de intrare folosind fișierul tastatura.txt
-    /// Trebuie să aveți în fișierul tastatura.txt suficiente date de intrare
-    /// (în formatul impus de voi) astfel încât execuția programului să se încheie.
-    /// De asemenea, trebuie să adăugați în acest fișier date de intrare
-    /// pentru cât mai multe ramuri de execuție.
-    /// Dorim să facem acest lucru pentru a automatiza testarea codului, fără să
-    /// mai pierdem timp de fiecare dată să introducem de la zero aceleași date de intrare.
-    ///
-    /// Pe GitHub Actions (bife), fișierul tastatura.txt este folosit
-    /// pentru a simula date introduse de la tastatură.
-    /// Bifele verifică dacă programul are erori de compilare, erori de memorie și memory leaks.
-    ///
-    /// Dacă nu puneți în tastatura.txt suficiente date de intrare, îmi rezerv dreptul să vă
-    /// testez codul cu ce date de intrare am chef și să nu pun notă dacă găsesc vreun bug.
-    /// Impun această cerință ca să învățați să faceți un demo și să arătați părțile din
-    /// program care merg (și să le evitați pe cele care nu merg).
-    ///
-    /////////////////////////////////////////////////////////////////////////
-    std::cin >> nr;
-    /////////////////////////////////////////////////////////////////////////
-    for(int i = 0; i < nr; ++i) {
-        std::cout << "v[" << i << "] = ";
-        std::cin >> v[i];
+    RenderWindow window(VideoMode(640, 1024), "Doodle Jump");
+    window.setFramerateLimit(60);
+    tile tile1("C:\\Users\\maxvo\\OneDrive\\Desktop\\Doodle Jump\\Default_tile.png", Vector2f(320, 600));
+    background background1("C:\\Users\\maxvo\\OneDrive\\Desktop\\Doodle Jump\\bck@2x.png");
+    caracter player("C:\\Users\\maxvo\\OneDrive\\Desktop\\Doodle Jump\\blue-lik-right@2x.png", Vector2f(320, 600));
+    while(window.isOpen()) {
+        Event event;
+        while(window.pollEvent(event)) {
+            if(event.type == Event::Closed) {
+                window.close();
+            }
+            if(event.type == Event::KeyPressed) {
+                player.processEvents(event.key.code, true);
+            } else if(event.type == Event::KeyReleased) {
+                player.processEvents(event.key.code, false);
+            }
+        }
+        player.update();
+        player.checkCollision(tile1.getSprite());
+        window.clear();
+        background1.draw(window);
+        tile1.draw(window);
+        player.draw(window);
+        window.display();
     }
-    std::cout << "\n\n";
-    std::cout << "Am citit de la tastatură " << nr << " elemente:\n";
-    for(int i = 0; i < nr; ++i) {
-        std::cout << "- " << v[i] << "\n";
-    }
-    ///////////////////////////////////////////////////////////////////////////
-    /// Pentru date citite din fișier, NU folosiți tastatura.txt. Creați-vă voi
-    /// alt fișier propriu cu ce alt nume doriți.
-    /// Exemplu:
-    /// std::ifstream fis("date.txt");
-    /// for(int i = 0; i < nr2; ++i)
-    ///     fis >> v2[i];
-    ///
-    ///////////////////////////////////////////////////////////////////////////
-    ///                Exemplu de utilizare cod generat                     ///
-    ///////////////////////////////////////////////////////////////////////////
-    Helper helper;
-    helper.help();
-    ///////////////////////////////////////////////////////////////////////////
     return 0;
 }
