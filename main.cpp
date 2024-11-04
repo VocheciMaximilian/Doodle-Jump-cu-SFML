@@ -8,8 +8,8 @@ class caracter {
 protected:
     Texture texture;
     Sprite sprite;
-    Vector2f position;
-    Vector2f velocity;
+    Vector2f position; // x, y
+    Vector2f velocity; //velocity.x vitez de miscare pe Ox ;  velocity.y viteza de miscare pe Oy
     float gravity=10;
     bool canJump=false;
     bool left=false, right=false;
@@ -69,6 +69,7 @@ public:
             canJump=true;
         }
     }
+    // functie pentru controlare caracterului
     void update() {
         if(left) {
             position.x-=velocity.x;
@@ -76,17 +77,17 @@ public:
         if(right) {
             position.x+=velocity.x;
         }
-        if(position.x<0) {
+        if(position.x<0) { // testez daca trece dintr-o parte in alta
             position.x=640;
         } else if(position.x>640) {
             position.x=0;
         }
-        if(canJump==true) {
-            velocity.y=10;
-            position.y+=velocity.y;
+        if(canJump==true) { // poate sari doar daca a atins o platforma
+            velocity.y=-20;
             canJump=false;
         }
-        position.y+=gravity;
+        velocity.y+=gravity*0.1;
+        position.y+=velocity.y;
 
         sprite.setPosition(position);
     }
@@ -171,6 +172,8 @@ int main() {
     RenderWindow window(VideoMode(640, 1024), "Doodle Jump");
     window.setFramerateLimit(60);
     tile tile1("C:\\Users\\maxvo\\OneDrive\\Desktop\\Doodle Jump\\Default_tile.png", Vector2f(320, 600));
+    tile tile2("C:\\Users\\maxvo\\OneDrive\\Desktop\\Doodle Jump\\Default_tile.png", Vector2f(100, 800));
+
     background background1("C:\\Users\\maxvo\\OneDrive\\Desktop\\Doodle Jump\\bck@2x.png");
     caracter player("C:\\Users\\maxvo\\OneDrive\\Desktop\\Doodle Jump\\blue-lik-right@2x.png", Vector2f(320, 600));
     while(window.isOpen()) {
@@ -190,6 +193,9 @@ int main() {
         window.clear();
         background1.draw(window);
         tile1.draw(window);
+        tile2.draw(window);
+        player.update();
+        player.checkCollision(tile2.getSprite());
         player.draw(window);
         window.display();
     }
