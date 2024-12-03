@@ -11,7 +11,7 @@ protected:
     Texture texture;
     Sprite sprite;
     Vector2f position;
-    void generateRandomPosition(tile *obj) {
+    Vector2f generateRandomPosition(Vector2f prevPos) {
         random_device rd;
         mt19937 gen(rd());
         uniform_real_distribution<> xDistrib(0, 600);
@@ -26,17 +26,26 @@ protected:
         }
 
         position.x = xOffset;
-        position.y += yOffset;
+        position.y = prevPos.y+yOffset;
     }
 public:
     //constructor
     tile(const string& texture_path, const Vector2f& startPoz)
         : position(startPoz) {
-        if(!texture.loadFromFile(texture_path)) {
-            cout<<"Tile texture didn't load "<<texture_path<<endl;
+        try {
+            if (!texture.loadFromFile(texture_path)) {
+                throw runtime_error("Tile texture didn't load: " + texture_path);
+            }
+            sprite.setTexture(texture);
+            sprite.setPosition(position);
+        } catch (const runtime_error& e) {
+            cerr << "Error in tile constructor: " << e.what() << endl;
+            if (!texture.loadFromFile("Doodle Jump\\default-fallback.png")) {
+                cout << "Fallback texture also failed to load!" << endl;
+            }
+            sprite.setTexture(texture);
+            sprite.setPosition(position);
         }
-        sprite.setTexture(texture);
-        sprite.setPosition(position);
     }
     //cc
     tile(const tile& other)
@@ -56,7 +65,7 @@ public:
     //destructor
     virtual ~tile() {}
     //afisare
-    void draw(RenderWindow& window) {
+    virtual void draw(RenderWindow& window) {
         window.draw(sprite);
     }
     Sprite& getSprite() {
@@ -91,11 +100,20 @@ public:
     //constructor
     caracter(const string& texturePath, const Vector2f& startPoz)
         : position(startPoz), velocity(10, 0) {
-        if(!texture.loadFromFile(texturePath)) {
-            cout<<"Character texture didn't load "<<texturePath<<endl;
+        try {
+            if (!texture.loadFromFile(texturePath)) {
+                throw runtime_error("Character texture didn't load: " + texturePath);
+            }
+            sprite.setTexture(texture);
+            sprite.setPosition(position);
+        } catch (const runtime_error& e) {
+            cerr << "Error in caracter constructor: " << e.what() << endl;
+            if (!texture.loadFromFile("Doodle Jump\\default-character.png")) {
+                cout << "Fallback character texture also failed to load!" << endl;
+            }
+            sprite.setTexture(texture);
+            sprite.setPosition(position);
         }
-        sprite.setTexture(texture);
-        sprite.setPosition(position);
     }
     //cc=
     caracter(const caracter& other)
@@ -119,7 +137,7 @@ public:
     Sprite& getSprite() {
         return sprite;
     }
-    void draw(RenderWindow& window){
+    virtual void draw(RenderWindow& window){
         window.draw(sprite);
     }
     void processEvents(Keyboard::Key key, bool checkPressed) {
@@ -148,11 +166,11 @@ public:
         }
         return false;
     }
-    void tileCaracterCollision(tile *obj) {
+    virtual void tileCaracterCollision(tile *obj) {
         checkCollision(obj->getSprite());
     }
     // function that is used to controll the caracter
-    void update() {
+    virtual void update() {
         if(left) {
             position.x-=velocity.x;
         }
@@ -236,6 +254,8 @@ int main() {
     background background1("Doodle Jump\\ice-bck@2x.png");
     solidTile startTile(Vector2f(320, 800));
     player p(startTile.getSprite().getPosition());
+    enemy e(Vector2f(320, 100));
+
 
     vector<unique_ptr<tile>> tiles;
     tiles.push_back(make_unique<solidTile>(startTile));
@@ -248,8 +268,6 @@ int main() {
         Vector2f randomPos(xDistrib(gen), yDistrib(gen));
         tiles.push_back(make_unique<solidTile>(randomPos));
     }
-
-    enemy e(Vector2f(320, 100));
 
     View camera;
     camera.setCenter(Vector2f(320, 512));
