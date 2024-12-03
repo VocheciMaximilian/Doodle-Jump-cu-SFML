@@ -48,6 +48,15 @@ include(cmake/Options.cmake)
 add_executable(${PROJECT_NAME}
     main.cpp
     generated/src/Helper.cpp
+        player.h
+        platform.h
+        breakablePlatform.h
+        colorChangingPlatform.h
+        game.h
+        platformFactory.h
+        scoreStrategy.h
+        randomGenerator.h
+        utils.h
 )
 
 include(cmake/CompilerFlags.cmake)
