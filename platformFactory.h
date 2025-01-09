@@ -19,7 +19,7 @@ public:
                 return new Platform(x, y);
 
             case PlatformType::Breakable:
-                // Using durability of 2 for demonstration
+                // durability of 2
                     return new BreakablePlatform<int>(x, y, 2);
 
             case PlatformType::ColorChanging:
